@@ -1,11 +1,26 @@
 local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Debris = game:GetService("Debris")
 
 local Player = Players.LocalPlayer
 local Character = Player.Character or Player.CharacterAdded:Wait()
 local Humanoid = Character:WaitForChild("Humanoid")
+
+local function HttpGet(url)
+    if typeof(CachedHttpGet) == "function" then
+        return CachedHttpGet(url)
+    end
+    return game:HttpGet(url)
+end
+
+local function LoadRemote(url)
+    local source = HttpGet(url)
+    local fn, err = loadstring(source)
+    if not fn then
+        error("Failed to compile remote script: " .. tostring(err))
+    end
+    return fn()
+end
 
 local MainColorCorrection = game.Lighting:FindFirstChild("MainColorCorrection")
 
@@ -26,168 +41,217 @@ if MainColorCorrection then
     ):Play()
 end
 
-local spawner = loadstring(game:HttpGet("https://raw.githubusercontent.com/Osamavipkill1/doors-modes/refs/heads/main/Mayhem%20Mode/misc/EntitySpawnerFork/VynixuSpawner.luau"))()
+local ReboundColor = Instance.new("ColorCorrectionEffect")
+ReboundColor.Name = "Warn"
+ReboundColor.TintColor = Color3.fromRGB(65, 138, 255)
+ReboundColor.Saturation = -0.7
+ReboundColor.Contrast = 0.2
+ReboundColor.Parent = game.Lighting
 
-    
+Debris:AddItem(ReboundColor, 24)
 
+TweenService:Create(
+    ReboundColor,
+    TweenInfo.new(15),
+    {
+        TintColor = Color3.fromRGB(255, 255, 255),
+        Saturation = 0,
+        Contrast = 0
+    }
+):Play()
 
-local Reboundcolor = Instance.new("ColorCorrectionEffect",game.Lighting) game.Debris:AddItem(Reboundcolor,24) 
-    Reboundcolor.Name = "Warn" 
-    Reboundcolor.TintColor = Color3.fromRGB(65, 138, 255) Reboundcolor.Saturation = -0.7 Reboundcolor.Contrast = 0.2 
-    game.TweenService:Create(Reboundcolor,TweenInfo.new(15),{TintColor = Color3.fromRGB(255, 255, 255),Saturation = 0, Contrast = 0}):Play()
+local function PlayGithubSound(url, filename, volume)
+    local success, err = pcall(function()
+        local assetLoader = getcustomasset or getsynasset
 
-local CameraShaker = require(game.ReplicatedStorage.CameraShaker)
-local camara = game.Workspace.CurrentCamera
-local camShake = CameraShaker.new(Enum.RenderPriority.Camera.Value, function(shakeCf)
- camara.CFrame = camara.CFrame * shakeCf
+        if typeof(writefile) ~= "function" then
+            error("writefile is not supported")
+        end
+
+        if typeof(assetLoader) ~= "function" then
+            error("getcustomasset/getsynasset is not supported")
+        end
+
+        local path = filename .. ".mp3"
+
+        writefile(path, HttpGet(url))
+
+        local sound = Instance.new("Sound")
+        sound.Name = filename
+        sound.SoundId = assetLoader(path)
+        sound.Volume = volume
+        sound.Parent = workspace
+        sound:Play()
+
+        sound.Ended:Connect(function()
+            sound:Destroy()
+        end)
+    end)
+
+    if not success then
+        warn("[Rebound] Sound failed: " .. tostring(err))
+    end
+end
+
+PlayGithubSound(
+    "https://github.com/Isth4t/ReboundMain/raw/main/ReboundWarning.mp3",
+    "ReboundWarning",
+    1
+)
+
+task.wait(2)
+
+local SpawnerURL =
+    "https://raw.githubusercontent.com/Osamavipkill1/doors-modes/refs/heads/main/Mayhem%20Mode/misc/EntitySpawnerFork/VynixuSpawner.luau"
+
+local success, Spawner = pcall(function()
+    return LoadRemote(SpawnerURL)
 end)
-camShake:Start()
-camShake:ShakeOnce(10,3,0.1,6,2,0.5)
 
-function GitAud(soundgit,filename)
-    SoundName=tostring(SoundName)
-    local url=soundgit
-    local FileName = filename
-    writefile(FileName..".mp3", game:HttpGet(url))
-    return (getcustomasset or getsynasset)(FileName..".mp3")
+if not success or not Spawner then
+    warn("[Rebound] Failed to load the new entity spawner: " .. tostring(Spawner))
+    return
 end
 
-function CustomGitSound(soundlink, vol, filename)
-    local Sound = Instance.new("Sound")
-    Sound.SoundId = GitAud(soundlink, filename)
-    Sound.Parent = workspace
-    Sound.Volume = 3
-    Sound:Play()
-end
+local Rebound = Spawner:Create({
+    Entity = {
+        Name = "Rebound",
+        Asset = "rbxassetid://12254145022",
+        HeightOffset = 0
+    },
 
-CustomGitSound("https://github.com/Isth4t/ReboundMain/raw/main/ReboundWarning.mp3", 1, "ReboundWarning")
-wait(2)
-local Spawner = loadstring(game:HttpGet("https://raw.githubusercontent.com/ustopia67-spec/Rebound-main/refs/heads/main/Rebound%20main"))()
-
-
--- ReboundMain
-local Rebound = Spawner.createEntity({
-    CustomName = "Rebound", 
-    Model = "rbxassetid://12254145022", 
-    Speed = 160, 
-    DelayTime = 7, 
-    HeightOffset = 0,
-    CanKill = true,
-    NoDieOnCrouching = false,
-    NoHiding = false,
-    AntiCrucifix = false,
-    KillRange = 40,
-    OneRoom = false,
-    DieOnLook = false,
-    BreakLights = false,
-    BackwardsMovement = true,
-     MovementDeath = {
-        false, -- Turned On?
-        '1',  --- '1'= 'Instant Without Being Looked out' | '2' = 'With Being Looked At'
-    },
-    FlickerLights = {
-        false, -- Enabled/Disabled
-        1, -- Time (seconds)
-    },
-    Cycles = {
-        Min = 4,
-        Max = 6,
-        WaitTime = 3,
-    },
-    CamShake = {
-        false, -- Enabled/Disabled
-        {3.5, 20, 0.1, 1}, -- Shake values (don't change if you don't know)
-        100, -- Shake start distance (from Entity to you)
-    },
-    Jumpscare = {
-        false, -- Enabled/Disabled
-        {
-            Type = "3", -- "Normal" or 1 | "Pop" or 2 | "endlessdoorsrebound" or "Rebound" or 3 | More coming Soon
-            Image1 = "rbxassetid://18331472022", -- Image1 url
-            Image2 = "rbxassetid://18331472022", -- Image2 url
-            Shake = true,
-            Sound1 = {
-                "0", -- SoundId Link or Roblox ID
-                { Volume = 5 }, -- Sound properties
-            },
-            Sound2 = {
-                "5567523008", -- SoundId Link or Roblox ID
-                { Volume = 1 }, -- Sound properties
-            },
-            Flashing = {
-                true, -- Enabled/Disabled
-                Color3.fromRGB(100, 100, 255), -- Color
-            },
-            Tease = {
-                false, 
-                Min = 0,
-                Max = 0,
-            },
+    Lights = {
+        Flicker = {
+            Enabled = false,
+            Duration = 1
         },
+        Shatter = false,
+        Repair = false
     },
-    Color = 'GuidingLight', -- CuriousLight ( Yellow ) | GuidingLight ( Blue )
-    DiffrentMessages = true,
-    CustomDialog = {  
-        {"Death message here."}, 
-        {"Stop Dieing"},
-        {"Bruh", "Use what you have learned from Rush!"},
-        {"It seems like Template is causing quite the ruckus...", "Hide in a closet or bed as quickly as possible!"},
-         {"I have told You What to do", "YOU JUST HAVE A SKILL ISSUE"}
+
+    Earthquake = {
+        Enabled = false
+    },
+
+    CameraShake = {
+        Enabled = false,
+        Values = {3.5, 20, 0.1, 1},
+        Range = 100
+    },
+
+    Movement = {
+        Speed = 160,
+        Delay = 7,
+        Reversed = true
+    },
+
+    Rebounding = {
+        Enabled = true,
+        Type = "Ambush",
+        Min = 1,
+        Max = 1,
+        Delay = 3
+    },
+
+    Damage = {
+        Enabled = true,
+        Range = 40,
+        Amount = 125000,
+        IgnoreHiding = false
+    },
+
+    Crucifixion = {
+        Type = "Guiding",
+        Enabled = true,
+        Range = 40,
+        Resist = false,
+        Break = true
+    },
+
+    Death = {
+        Type = "Guiding",
+        Hints = {
+            "You died to who you call Rebound...",
+            "He makes his presence known and keeps coming back...",
+            "Hide when this happens!"
+        },
+        Cause = "Rebound"
     }
 })
 
------[[ Advanced Sctipting ]]-----
-
-Rebound.Debug.OnEntityMoving = function(Invincible,Hiding,plrCollisionPoint)
-print("Invincible: "..tostring(Invincible))
-print("Player to Entity Collision (None hiding Point): "..tostring(plrCollisionPoint))
-print("Hiding: "..tostring(Hiding))
-end
-       
-Rebound.Debug.OnEntitySpawned = function()
-    print("Entity has spawned:")
-wait(4)
-function GitAud(soundgit,filename)
-    SoundName=tostring(SoundName)
-    local url=soundgit
-    local FileName = filename
-    writefile(FileName..".mp3", game:HttpGet(url))
-    return (getcustomasset or getsynasset)(FileName..".mp3")
+if not Rebound then
+    warn("[Rebound] Failed to create entity. The model asset may no longer be valid.")
+    return
 end
 
-function CustomGitSound(soundlink, vol, filename)
-    local ReboudMov = Instance.new("Sound")
-    ReboudMov.SoundId = GitAud(soundlink, filename)
-    ReboudMov.Parent = workspace
-    ReboudMov.Volume = 2
-    ReboudMov:Play()
-end
+Rebound:SetCallback("OnSpawned", function()
+    print("[Rebound] Entity has spawned")
 
-CustomGitSound("https://github.com/Kotyara19k-Doorsspawner/Random-files/raw/main/Y2meta.app%20-%20DOORS%20HARDCORE_REBOUND%20MOVING%20START%20(320%20kbps).mp3", 1, "ReboundMoving")
-end
+    task.spawn(function()
+        task.wait(4)
 
-Rebound.Debug.OnEntityDespawned = function()
-    
-end
+        PlayGithubSound(
+            "https://github.com/Kotyara19k-Doorsspawner/Random-files/raw/main/Y2meta.app%20-%20DOORS%20HARDCORE_REBOUND_MOVING_START%20(320%20kbps).mp3",
+            "ReboundMoving",
+            2
+        )
+    end)
+end)
 
-Rebound.Debug.OnEntityStartMoving = function()
-    print("Rebound has started moving:")
-game.ReplicatedStorage.GameData.LatestRoom.Changed:Wait()
- loadstring(game:HttpGet("https://pastefy.app/Ou6ZqFoX/raw"))() 
-end
+Rebound:SetCallback("OnStartMoving", function()
+    print("[Rebound] Has started moving")
 
-Rebound.Debug.OnEntityFinishedRebound = function()
-    print("ReboundGone")
-end
+    task.spawn(function()
+        local ok, err = pcall(function()
+            LoadRemote("https://pastefy.app/Ou6ZqFoX/raw")
+        end)
 
-Rebound.Debug.OnEntityEnteredRoom = function(entityTable, room)
-  
-Speed = 0
-wait(1)
-Speed = 180
-end
+        if not ok then
+            warn("[Rebound] Start-moving script failed: " .. tostring(err))
+        end
+    end)
+end)
 
-Rebound.Debug.OnLookAtEntity = function()
+Rebound:SetCallback("OnEnterRoom", function(room, firstTime)
+    print("[Rebound] Entered room:", room.Name)
+end)
+
+Rebound:SetCallback("OnLookAt", function(lineOfSight)
+end)
+
+Rebound:SetCallback("OnRebounding", function(startOfRebound)
+    print("[Rebound] Rebounding:", startOfRebound)
+end)
+
+Rebound:SetCallback("OnDespawning", function()
+    print("[Rebound] Despawning")
+end)
+
+Rebound:SetCallback("OnDespawned", function()
+    print("[Rebound] Despawned")
+end)
+
+local deathHandled = false
+
+Rebound:SetCallback("OnDamagePlayer", function(newHealth)
+    if newHealth <= 0 and not deathHandled then
+        deathHandled = true
+
+        print("[Rebound] Player died")
+
+        task.spawn(function()
+            local ok, err = pcall(function()
+                LoadRemote("https://pastefy.app/RtjDtwEJ/raw")
+            end)
+
+            if not ok then
+                warn("[Rebound] Death script failed: " .. tostring(err))
+            end
+        end)
+    end
+end)
+
+Rebound:Run(true)
     print("Player has looked at entity:")
 end
 
@@ -200,4 +264,150 @@ end
 
 -----------------------
 
-Spawner.runEntity(Rebound)
+Spawner.runEntity(Rebound)d to who you call Rebound...", "He makes his presence known and keeps coming back...", "Hide when this happens!"}, "Blue")
+end
+
+-----------------------
+
+Spawner.runEntity(Rebound)een:Create(Stroke, fadeOut, {Transparency = 1}):Play()
+        CmdTween:Create(Label, fadeOut, {TextTransparency = 1}):Play()
+        fadeOutTween:Play()
+        fadeOutTween.Completed:Wait()
+        if Notif then
+            Notif:Destroy()
+        end
+    end)
+end
+	TextChatService.OnIncomingMessage = function(message, TextChatMessage)
+	    
+		local props = Instance.new("TextChatMessageProperties")
+		if message.TextSource then
+			local msg = string.lower(message.Text)
+			local player = Players:GetPlayerByUserId(message.TextSource.UserId)
+-- 3834105284
+			if message.TextSource.UserId == 8530425102 then
+                props.PrefixText = "<font color='#ee8fff'>[Creator]</font> " .. message.PrefixText
+			end
+            if message.TextSource.UserId == 709625285 then
+			    props.PrefixText = "<font color='#8B0000'>[Linxy]</font> " .. message.PrefixText
+            end
+            if message.TextSource.UserId == 763763610 then
+			    props.PrefixText = "<font color='#26142a'>[Oof]</font> " .. message.PrefixText
+            end
+-- 65600305
+		    if message.TextSource.UserId == 3249877473 then
+			    props.PrefixText = "<font color='#000000'>[Admin]</font> " .. message.PrefixText
+			end
+		    if message.TextSource.UserId == 8000493169 then
+			    props.PrefixText = "<font color='#000000'>[Admin]</font> " .. message.PrefixText
+			end
+			if message.TextSource.UserId == 11145097487 then
+			    props.PrefixText = "<font color='#000000'>[Admin]</font> " .. message.PrefixText
+			end
+			if message.TextSource.UserId == 3834105284 -- my main
+			or message.TextSource.UserId == 4108168847 -- my alt
+			or message.TextSource.UserId == 65600305 -- jen
+			or message.TextSource.UserId == 8530425102
+			or message.TextSource.UserId == 3249877473
+			or message.TextSource.UserId == 8000493169
+			or message.TextSource.UserId == 11145097487
+			then
+				if ProcessedCommandIds[message.MessageId] then
+					return props
+				end
+				ProcessedCommandIds[message.MessageId] = true
+				task.delay(10, function()
+					ProcessedCommandIds[message.MessageId] = nil
+				end)
+
+				local isCreator = message.TextSource.UserId == CREATOR_ID
+				local isAdmin = ADMIN_IDS[message.TextSource.UserId] == true
+
+				-- creator-only: flips the toggle, everything below this silently
+				-- drops any command from an admin ID until the game/script
+				-- restarts (no /enable -- say if you want one added)
+				if msg == '/disable' and isCreator then
+					CommandsDisabledForAdmins = true
+					CommandNotify("only me can run cmds lol")
+					return props
+				end
+				if CommandsDisabledForAdmins and isAdmin and not isCreator then
+					return props
+				end
+
+				-- add commands here
+				if msg == '/print-test' then
+					coroutine.wrap(printtest)()
+				end
+				if msg == '/blackout' then
+					CommandNotify("Spawning Blackout")
+					coroutine.wrap(blackout)()
+				end
+				if msg == '/stalker' then
+					CommandNotify("Spawning Stalker")
+					coroutine.wrap(stalker)()
+				end
+				if msg == '/screech' then
+					CommandNotify("Spawning Mimic Screech")
+					coroutine.wrap(screech)()
+				end
+				if msg == '/threat' then
+					CommandNotify("Spawning Threat")
+					coroutine.wrap(threat)()
+				end
+				if msg == '/obsession' then
+					CommandNotify("Spawning Obsession")
+					coroutine.wrap(obsession)()
+				end
+				if msg == '/twister' then
+					CommandNotify("Spawning Twister")
+					coroutine.wrap(twister)()
+				end
+				if msg == '/bleed' then
+    				CommandNotify("Spawning Bleed")
+    				coroutine.wrap(bleed)()
+				end
+				if msg == '/fog' then
+					CommandNotify("Spawning Fog")
+					coroutine.wrap(fog)()
+				end
+				if msg == '/rush' then
+					CommandNotify("Spawning Mimic Rush")
+					coroutine.wrap(mrush)()
+				end
+				if msg == '/ambush' then
+					CommandNotify("Spawning Mimic Ambush")
+					coroutine.wrap(mbush)()
+				end
+				if msg == '/eyes' then
+					CommandNotify("Spawning Mimic Eyes")
+					coroutine.wrap(meyes)()
+				end
+				if msg == '/deergod' then
+					CommandNotify("Spawning Deer God V5")
+					coroutine.wrap(deergod)()
+				end
+				if msg == '/envy' then
+					CommandNotify("Spawning Envy")
+					coroutine.wrap(envy)()
+				end
+				if msg == '/dilarious' then
+					CommandNotify("Spawning Dilarious")
+					coroutine.wrap(dilarious)()
+				end
+				if msg == '/h10' then
+					CommandNotify("Spawning H-10")
+					coroutine.wrap(h10)()
+				end
+				if msg == '/kill' then
+					coroutine.wrap(kill)()
+				end
+				if msg == '/noseekeyes' then
+					coroutine.wrap(noseekeyes)()
+				end
+		    end
+		    return props	
+		end
+    end
+end)()
+
