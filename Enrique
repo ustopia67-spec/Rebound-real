@@ -62,7 +62,7 @@ end
 
 CustomGitSound("https://github.com/Isth4t/ReboundMain/raw/main/ReboundWarning.mp3", 1, "ReboundWarning")
 wait(2)
-local Spawner = loadstring(game:HttpGet('https://raw.githubusercontent.com/MuhXd/DoorSuff/main/OtherSuff/DoorEntitySpawn%2BSource'))()
+local Spawner = loadstring(game:HttpGet("https://raw.githubusercontent.com/ustopia67-spec/Rebound-main/refs/heads/main/Rebound%20main"))()
 
 
 -- ReboundMain
